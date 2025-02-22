@@ -37,11 +37,13 @@ app.get('/blog', async (req, res) => {
 
 app.post('/create-blog', async (req, res) => {
     try {
+
+        const {title, category, image, post} = req.body
         const result = await client.query(
-            'INSERT INTO blogs (title, img, post) VALUES ($1, $2, $3) RETURNING *', 
-            [req.body.title, req.body.image, req.body.post]
+            'INSERT INTO blogs (title, img, post, category) VALUES ($1, $2, $3, $4) RETURNING *', 
+            [title, image, post,category]
         );
-        res.json({ message: 'Blog created successfully', data: result.rows[0] });
+        res.json({ message: 'Blog created successfully', desc: result.rowCount });
     } catch (error) {
         console.error('Error creating blog:', error);
         res.status(500).json({ error: 'Internal server error' });

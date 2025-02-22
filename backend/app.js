@@ -1,9 +1,13 @@
 const express = require('express');
 const { client } = require('./db/connection.js'); 
 const multer = require('multer');
+const cors = require('cors');
 require('dotenv').config();
 
+const PORT = process.env.PORT || 3000;
 const app = express();
+app.use(express.json()); 
+app.use(cors());
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -19,8 +23,7 @@ const storage = multer.diskStorage({
 
 
 
-const PORT = process.env.PORT || 3000;
-app.use(express.json()); 
+
 
 app.get('/blog', async (req, res) => {
     try {

@@ -1,59 +1,40 @@
 const express = require('express');
-const { client } = require('./db/connection.js'); 
-const multer = require('multer');
 const cors = require('cors');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const { client } = require('./db/connection.js'); 
 require('dotenv').config();
 
-const PORT = process.env.PORT || 3000;
 const app = express();
-app.use(express.json()); 
+app.use(express.json());
 app.use(cors());
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/')
-    },
-    filename: function (req, file, cb) {
-      
-      cb(null, `${Date.now()}.${file.originalname}`)
-    }
-  })
-  
-  const upload = multer({ storage: storage })
+// Cloudinary Config
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-
-
-
+// Multer Storage
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: { folder: "learnPern", format: "png", public_id: (req, file) => `${Date.now()}-${file.originalname}` },
+});
+const upload = multer({ storage });
 
 app.get('/blog', async (req, res) => {
-    try {
-        const result = await client.query('SELECT * FROM blogs');
-        res.json({ data: result.rows }); // Return all rows
-    } catch (error) {
-        console.error('Error fetching blogs:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    const result = await client.query('SELECT * FROM blogs');
+    res.json({ data: result.rows });
 });
+
+app.post('/blog-image', upload.single('file'), (req, res) => res.json({ imageUrl: req.file.path }));
 
 app.post('/create-blog', async (req, res) => {
-    try {
-
-        const {title, category, image, post} = req.body
-        const result = await client.query(
-            'INSERT INTO blogs (title, img, post, category) VALUES ($1, $2, $3, $4) RETURNING *', 
-            [title, image, post,category]
-        );
-        res.json({ message: 'Blog created successfully', desc: result.rowCount });
-    } catch (error) {
-        console.error('Error creating blog:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    const { title, category, image, post } = req.body;
+    const result = await client.query('INSERT INTO blogs (title, img, post, category) VALUES ($1, $2, $3, $4) RETURNING *', [title, image, post, category]);
+    res.json({ message: 'Blog created', desc: result.rowCount });
 });
 
-app.post('/blog-image', upload.single('file'), function(req, res, next){
-     res.json(req.file);
-})
-
-app.listen(PORT, () => {
-    console.log(`Server started at port ${PORT}`);
-});
+app.listen(3000, () => console.log(`Server running on port 3000`));

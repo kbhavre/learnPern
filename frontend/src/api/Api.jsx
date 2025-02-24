@@ -2,44 +2,35 @@ import axios from 'axios';
 
 const apiUrl = 'http://localhost:3000';
 
-export const getBlogs = ()=>{
-    return axios.get(apiUrl+'/blog')
-    .then(result =>{
-        return result;
-    })
-    .catch(err =>{
-        return err;
-    })
-}
-export const createBlog = (data)=>{
-    return axios.post(apiUrl+'/create-blog', data)
-    .then(result =>{
+export const getBlogs = async () => {
+    try {
+        const result = await axios.get(apiUrl + '/blog');
         return result.data;
-    })
-    .catch(err =>{
-        return err;
-    })
-}
+    } catch (err) {
+        console.error("Error fetching blogs:", err);
+        return null;
+    }
+};
 
-export const getBlogById = ()=>{
-
-}
+export const createBlog = async (data) => {
+    try {
+        const result = await axios.post(apiUrl + '/create-blog', data);
+        return result.data;
+    } catch (err) {
+        console.error("Error creating blog:", err);
+        return null;
+    }
+};
 
 export const uploadFile = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    const config = {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
-    };
-
     try {
-        const response = await axios.post(apiUrl + "/blog-image", formData, config);
-        console.log("Upload Response:", response.data);
-
-        return response.data; 
+        const response = await axios.post(apiUrl + "/blog-image", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return response.data;
     } catch (error) {
         console.error("Upload error:", error);
         throw error;
